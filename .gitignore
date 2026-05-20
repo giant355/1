@@ -1,0 +1,13 @@
+.vs/
+x64/
+Debug/
+Release/
+*.tga
+*.bmp
+*.exe
+*.ilk
+*.pdb
+*.user
+*.lastbuildstate
+*.unsuccessfulbuild
+*.tlog/
