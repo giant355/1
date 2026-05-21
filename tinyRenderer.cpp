@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     init_perspective(norm(eye - center));                        // build the Perspective matrix
     init_viewport(width / 16, height / 16, width * 7 / 8, height * 7 / 8); // build the Viewport    matrix
     init_zbuffer(width, height);
-    TGAImage framebuffer(width, height, TGAImage::RGB, { 177, 195, 209, 255 });
+    TGAImage framebuffer(width, height, TGAImage::RGB);
 
     for (int m = 1; m < argc; m++) {                    // iterate through all input objects
         Model model(argv[m]);                       // load the data

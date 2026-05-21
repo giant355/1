@@ -11,3 +11,4 @@ Release/
 *.lastbuildstate
 *.unsuccessfulbuild
 *.tlog/
+*.obj
