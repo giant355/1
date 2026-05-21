@@ -26,14 +26,22 @@ void init_zbuffer(const int width, const int height) {
 	zbuffer = std::vector(width * height, -1000.);
 }
 
-void rasterize(const Triangle& clip, const IShader& shader, TGAImage& framebuffer) {
+void vertexProcessing(const Shader& shader,Model& model) {
+	for (int f = 0; f < model.nfaces(); f++) {
+		shader.vertex(model.vert(f, 0));
+		shader.vertex(model.vert(f, 1));
+		shader.vertex(model.vert(f, 2));
+	}
+}
+
+void rasterize(const Triangle& clip, const Shader& shader, TGAImage& framebuffer) {
 	vec4 ndc[3] = { clip[0] / clip[0].w, clip[1] / clip[1].w, clip[2] / clip[2].w };
 	vec2 screen[3] = { (Viewport * ndc[0]).xy(), (Viewport * ndc[1]).xy(), (Viewport * ndc[2]).xy() };
 
 	mat<3, 3> ABC = { {{screen[0].x,screen[0].y,1},{screen[1].x,screen[1].y,1},{screen[2].x,screen[2].y,1}} };
 	if (ABC.det() < 1)return;
-	auto [minX, maxX] = std::minmax({screen[0].x, screen[1].x, screen[2].x});
-	auto [minY, maxY] = std::minmax({screen[0].y, screen[1].y, screen[2].y});
+	auto [minX, maxX] = std::minmax({ screen[0].x, screen[1].x, screen[2].x });
+	auto [minY, maxY] = std::minmax({ screen[0].y, screen[1].y, screen[2].y });
 #pragma omp parallel for
 	int xmin = std::max(0, static_cast<int>(std::floor(minX)));
 	int xmax = std::min(framebuffer.width(), static_cast<int>(std::ceil(maxX)));
@@ -51,6 +59,4 @@ void rasterize(const Triangle& clip, const IShader& shader, TGAImage& framebuffe
 			framebuffer.set(x, y, color);
 		}
 	}
-	
-
 }
