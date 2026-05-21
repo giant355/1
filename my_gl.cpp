@@ -26,14 +26,6 @@ void init_zbuffer(const int width, const int height) {
 	zbuffer = std::vector(width * height, -1000.);
 }
 
-void vertexProcessing(const Shader& shader,Model& model) {
-	for (int f = 0; f < model.nfaces(); f++) {
-		shader.vertex(model.vert(f, 0));
-		shader.vertex(model.vert(f, 1));
-		shader.vertex(model.vert(f, 2));
-	}
-}
-
 void rasterize(const Triangle& clip, const Shader& shader, TGAImage& framebuffer) {
 	vec4 ndc[3] = { clip[0] / clip[0].w, clip[1] / clip[1].w, clip[2] / clip[2].w };
 	vec2 screen[3] = { (Viewport * ndc[0]).xy(), (Viewport * ndc[1]).xy(), (Viewport * ndc[2]).xy() };

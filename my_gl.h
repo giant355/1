@@ -9,16 +9,10 @@ void init_viewport(const int x, const int y, const int w, const int h);
 void init_zbuffer(const int width, const int height);
 
 struct Shader {
-    virtual void vertex(vec4 v) const= 0;
+    mat<4, 4> ModelTrans = { {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}} };
+    virtual vec4 vertex(const vec4& v) const= 0;
     virtual std::pair<bool, TGAColor> fragment(const vec3 bar) const = 0;
 };
-
-/// <summary>
-/// 对模型的顶点进行mvp变化，得到裁剪空间坐标（直接修改了模型的顶点位置）
-/// </summary>
-/// <param name="shader">提供vertex的shader</param>
-/// <param name="model">Model实例</param>
-void vertexProcessing(const Shader& shader, Model& model);
 
 typedef vec4 Triangle[3]; // a triangle primitive is made of three ordered points
 
