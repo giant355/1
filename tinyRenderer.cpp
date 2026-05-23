@@ -15,15 +15,16 @@ constexpr vec3     up{ 0, 1, 0 }; // camera up vector
 
 struct Blinn_PhongShader : Shader {
     TGAColor color{};
-    //vec3 tri[3];
-    Triangle tri;
+    Triangle tri; //观察空间
+    Model model;
     vec3 l;
-    Blinn_PhongShader(const vec3& lightDir) {
-        l=normalized((vec4{lightDir.x,lightDir.y,lightDir.z,0}*ModelTrans*ModelView).xyz());
+    Blinn_PhongShader(const vec3& lightDir,const Model& m):model(m) {
+        l = normalized((ModelView * (ModelTrans * vec4{lightDir.x,lightDir.y,lightDir.z,0})).xyz());//观察空间
     }
-    vec4 vertex(const vec4& v) const override {
-        vec4 gl_Position = v *ModelTrans * ModelView * Perspective;
-        return gl_Position;
+    virtual vec4 vertex(const int face,const int vert) {
+        vec4 v = (ModelView*(ModelTrans*model.vert(face, vert)));//观察空间
+        tri[vert] = v;
+        return Perspective*v ;//裁剪空间
     }
     std::pair<bool, TGAColor> fragment(const vec3 bar)const override {
         TGAColor gl_FragColor{255,255,255,255};
@@ -31,18 +32,13 @@ struct Blinn_PhongShader : Shader {
         vec3 temp2 = tri[2].xyz() - tri[1].xyz();
         vec3 n=normalized(cross(temp1, temp2));//这里假设事先知道缠绕方向
 
-        double ambient = .3;
+        double ambient = .1;
         double diff = std::max(0., n * l);
-        vec3 coordinate =
-         mat<3,3>{ {{ tri[0].x,tri[0].y,tri[0].z },
-                    { tri[1].x,tri[1].y,tri[1].z },
-                    { tri[2].x,tri[2].y,tri[2].z }} }*bar;
-        vec3 v = eye - coordinate;
-        vec3 half = normalized(l + v);
-        double spec = std::pow(std::max(half * n, 0.),35);
-        double result = ambient + diff + spec;
+        vec3 r = 2 * n * (n * l) - l;
+        double spec = std::pow(std::max(r.z, 0.), 35);
+        double lighting = ambient + .4 * diff + .9 * spec;
         for (int channel : {0, 1, 2})
-            gl_FragColor[channel] *= std::min(1., ambient + .4 * diff + .9 * spec);
+            gl_FragColor[channel] *= std::min(1., lighting);
         return { false, gl_FragColor };
     }
 };
@@ -59,18 +55,17 @@ mat<4, 4> rotation(const vec3& axis, double angle) {
 int main(int argc, char** argv) {
     lookAt(eye,center,up);
     init_perspective(norm(eye-center));
-    init_viewport(0, 0, width, height);
+    init_viewport(width / 16, height / 16, width * 7 / 8, height * 7 / 8);
     init_zbuffer(width, height);
     TGAImage framebuffer(width, height, TGAImage::RGB);
 
     for (int m = 1; m < argc; m++) {
         Model model(argv[m]);
-        Blinn_PhongShader shader({ 1, 1, 1 });
-        for (int f = 0; f < model.nfaces(); f++) {
-            shader.tri[0] = shader.vertex(model.vert(f, 0));
-            shader.tri[1] = shader.vertex(model.vert(f, 1));
-            shader.tri[2] = shader.vertex(model.vert(f, 2));
-            rasterize(shader.tri,shader,framebuffer);
+        Blinn_PhongShader shader({ 1, 1, 1 }, model);
+        //shader.ModelTrans=shader.ModelTrans * rotation({ 0, 1, 0 }, -3.14/6);
+        for (int i = 0; i < model.nfaces(); i++) {
+            Triangle clip = {shader.vertex(i, 0), shader.vertex(i, 1), shader.vertex(i, 2)};
+            rasterize(clip, shader, framebuffer);
         }
     }
 

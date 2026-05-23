@@ -34,11 +34,11 @@ void rasterize(const Triangle& clip, const Shader& shader, TGAImage& framebuffer
 	if (ABC.det() < 1)return;
 	auto [minX, maxX] = std::minmax({ screen[0].x, screen[1].x, screen[2].x });
 	auto [minY, maxY] = std::minmax({ screen[0].y, screen[1].y, screen[2].y });
-#pragma omp parallel for
 	int xmin = std::max(0, static_cast<int>(std::floor(minX)));
 	int xmax = std::min(framebuffer.width(), static_cast<int>(std::ceil(maxX)));
 	int ymin = std::max(0, static_cast<int>(std::floor(minY)));
 	int ymax = std::min(framebuffer.height(), static_cast<int>(std::ceil(maxY)));
+#pragma omp parallel for
 	for (int x = xmin; x < xmax; x++) {
 		for (int y = ymin; y < ymax; y++) {
 			vec3 bc = ABC.invert_transpose() * vec3{static_cast<double>(x),static_cast<double>(y),1.};

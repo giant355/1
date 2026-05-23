@@ -10,7 +10,6 @@ void init_zbuffer(const int width, const int height);
 
 struct Shader {
     mat<4, 4> ModelTrans = { {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}} };
-    virtual vec4 vertex(const vec4& v) const= 0;
     virtual std::pair<bool, TGAColor> fragment(const vec3 bar) const = 0;
 };
 
