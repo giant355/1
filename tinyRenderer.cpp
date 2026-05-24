@@ -15,7 +15,7 @@ constexpr vec3     up{ 0, 1, 0 }; // camera up vector
 
 struct Blinn_PhongShader : Shader {
     TGAColor color{};
-    Triangle tri; //观察空间
+    vec4 nrms[3];
     Model model;
     vec3 l;
     Blinn_PhongShader(const vec3& lightDir,const Model& m):model(m) {
@@ -23,20 +23,17 @@ struct Blinn_PhongShader : Shader {
     }
     virtual vec4 vertex(const int face,const int vert) {
         vec4 v = (ModelView*(ModelTrans*model.vert(face, vert)));//观察空间
-        tri[vert] = v;
+        nrms[vert] = (ModelView * (ModelTrans * model.normal(face, vert)));//观察空间
         return Perspective*v ;//裁剪空间
     }
     std::pair<bool, TGAColor> fragment(const vec3 bar)const override {
         TGAColor gl_FragColor{255,255,255,255};
-        vec3 temp1 = tri[1].xyz() - tri[0].xyz();
-        vec3 temp2 = tri[2].xyz() - tri[1].xyz();
-        vec3 n=normalized(cross(temp1, temp2));//这里假设事先知道缠绕方向
-
-        double ambient = .1;
+        vec3 n = bar.x * nrms[0].xyz()+ bar.y * nrms[1].xyz()+ bar.z * nrms[2].xyz();
+        double ambient = .3;
         double diff = std::max(0., n * l);
         vec3 r = 2 * n * (n * l) - l;
-        double spec = std::pow(std::max(r.z, 0.), 35);
-        double lighting = ambient + .4 * diff + .9 * spec;
+        double spec = std::pow(std::max((vec3{0,0,1}*r), 0.), 35);
+        double lighting = ambient + .4 * diff + 1.2 * spec;
         for (int channel : {0, 1, 2})
             gl_FragColor[channel] *= std::min(1., lighting);
         return { false, gl_FragColor };
