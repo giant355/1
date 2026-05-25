@@ -135,11 +135,6 @@
     <ClInclude Include="my_gl.h" />
     <ClInclude Include="tgaimage.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="diablo3_pose.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
