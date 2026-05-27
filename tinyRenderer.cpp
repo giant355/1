@@ -64,8 +64,9 @@ int main(int argc, char** argv) {
         Model model(argv[m]);
         std::cerr << argv[m]<<std::endl;
         Blinn_PhongShader shader({ -1, 1, 1 }, model);
-        //shader.ModelTrans = shader.ModelTrans * rotation({ 1,1,1 }, 3.14 / 6);
-        //shader.ModelTrans=shader.ModelTrans * rotation({ 0, 1, 0 }, -3.14/6);
+        std::string fname(argv[m]);
+        if (fname.find("eye_outer") != std::string::npos)
+            shader.ModelTrans = shader.ModelTrans*mat<4,4>{ {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0.1,1}} };//修复bug
         for (int i = 0; i < model.nfaces(); i++) {
             Triangle clip = {shader.vertex(i, 0), shader.vertex(i, 1), shader.vertex(i, 2)};
             rasterize(clip, shader, framebuffer);
