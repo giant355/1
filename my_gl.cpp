@@ -25,6 +25,9 @@ void init_viewport(const int x, const int y, const int w, const int h) {
 void init_zbuffer(const int width, const int height) {
 	zbuffer = std::vector(width * height, -1000.);
 }
+TGAColor Shader:: sampler2D(const TGAImage& img, const vec2& uv) {
+	return img.get(uv.x * img.width(), uv.y * img.height());
+}
 
 void rasterize(const Triangle& clip, const Shader& shader, TGAImage& framebuffer) {
 	vec4 ndc[3] = { clip[0] / clip[0].w, clip[1] / clip[1].w, clip[2] / clip[2].w };

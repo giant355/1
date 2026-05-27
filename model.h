@@ -10,7 +10,10 @@ class Model {
     std::vector<int> facet_vrt = {}; // per-triangle index in the above array
     std::vector<int> facet_nrm = {};
     std::vector<int> facet_tex = {};
+public:
+    TGAImage diffusemap = {};
     TGAImage normalmap = {};
+    TGAImage specularmap = {};
 public:
     Model(const std::string filename);
     int nverts() const; // number of vertices
@@ -20,4 +23,5 @@ public:
     vec4 normal(const vec2& uv)const;
     vec4 vert(const int iface, const int nthvert) const;   // 0 <= iface <= nfaces(), 0 <= nthvert < 3
     vec2 uv(const int face, const int nthvert) const;
+  
 };

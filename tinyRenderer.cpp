@@ -7,8 +7,8 @@
 extern mat<4, 4> ModelView, Perspective;
 extern std::vector<double> zbuffer;
 
-constexpr int width = 4000;      // output image size
-constexpr int height = 4000;
+constexpr int width = 800;      // output image size
+constexpr int height = 800;
 constexpr vec3    eye{ -1, 0, 2 }; // camera position
 constexpr vec3 center{ 0, 0, 0 }; // camera direction
 constexpr vec3     up{ 0, 1, 0 }; // camera up vector
@@ -27,17 +27,20 @@ struct Blinn_PhongShader : Shader {
         return Perspective*v ;//裁剪空间
     }
     std::pair<bool, TGAColor> fragment(const vec3 bar)const override {
-        TGAColor gl_FragColor{255,255,255,255};
+      
         vec2 barUV = uv[0] * bar.x + uv[1] * bar.y + uv[2] * bar.z;
-        vec3 n = model.normal(barUV).xyz();
-        double ambient = .3;
-        double diff = std::max(0., n * l);
-        vec3 r = 2 * n * (n * l) - l;
-        double spec = std::pow(std::max((vec3{0,0,1}*r), 0.), 8);
-        double lighting = ambient + .4 * diff + 0.9 * spec;
-        for (int channel : {0, 1, 2})
-            gl_FragColor[channel] *= std::min(1., lighting);
-        return { false, gl_FragColor };
+        vec3 n = normalized((ModelView*ModelTrans.invert_transpose()*model.normal(barUV)).xyz());
+
+        double ambient = .4;
+        double diffuse = .4*std::max(0., n * l);
+        vec3 r = normalized(2 * n * (n * l) - l);
+        double specular = 10.*sampler2D(model.specularmap,barUV)[0]/255.*std::pow(std::max((vec3{ 0,0,1 }*r), 0.), 35);
+
+        TGAColor gl_Fragment = sampler2D(model.diffusemap, barUV);
+        for (int channel : {0, 1, 2}) {
+            gl_Fragment[channel] = std::min(255., gl_Fragment[channel] * (ambient + diffuse + specular));
+        }
+        return { false,gl_Fragment };
     }
 };
 mat<4, 4> rotation(const vec3& axis, double angle) {
@@ -59,8 +62,9 @@ int main(int argc, char** argv) {
 
     for (int m = 1; m < argc; m++) {
         Model model(argv[m]);
+        std::cerr << argv[m]<<std::endl;
         Blinn_PhongShader shader({ -1, 1, 1 }, model);
-        shader.ModelTrans = shader.ModelTrans * rotation({ 1,1,1 }, 3.14 / 6);
+        //shader.ModelTrans = shader.ModelTrans * rotation({ 1,1,1 }, 3.14 / 6);
         //shader.ModelTrans=shader.ModelTrans * rotation({ 0, 1, 0 }, -3.14/6);
         for (int i = 0; i < model.nfaces(); i++) {
             Triangle clip = {shader.vertex(i, 0), shader.vertex(i, 1), shader.vertex(i, 2)};

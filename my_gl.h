@@ -10,6 +10,7 @@ void init_zbuffer(const int width, const int height);
 
 struct Shader {
     mat<4, 4> ModelTrans = { {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}} };
+    static TGAColor sampler2D(const TGAImage& img, const vec2& uv);
     virtual std::pair<bool, TGAColor> fragment(const vec3 bar) const = 0;
 };
 
