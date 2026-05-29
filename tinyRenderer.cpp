@@ -24,13 +24,13 @@ struct PhongShader : Shader {
         l = normalized((ModelView * (ModelTrans * vec4{lightDir.x,lightDir.y,lightDir.z,0})).xyz());//观察空间
     }
     virtual vec4 vertex(const int face,const int vert) {
-        vec4 v = (ModelView*(ModelTrans*model.vert(face, vert)));//观察空间
+        vec4 v = (ModelView*(ModelTrans*model.vert(face, vert)));//观察空间，vert里面的vec4的w始终为1
 
         tri[vert] = v.xyz();
         triN[vert] = model.normal(face,vert);
         uv[vert]  = model.uv(face, vert);
 
-        return Perspective*v ;//裁剪空间
+        return Perspective*v ;//裁剪空间,此时w可以通过计算得到对于(-z/f)+1
     }
     std::pair<bool, TGAColor> fragment(const vec3 bar)const override {
         vec2 barUV =  uv[0] * bar.x +   uv[1] * bar.y +   uv[2] * bar.z;
@@ -44,14 +44,14 @@ struct PhongShader : Shader {
         mat<2, 3>TB = U.invert() * E;
 
         vec3 T = TB[0],B = TB[1];
+        T = T - ((T * N) / (N * N)) * N;                                                           
+        B = cross(N,T);
         T = normalized(T);
         N = normalized(N);
         B = normalized(B);
-        T = T - ((T * N) / (N * N)) * N;                                                           
-        B = cross(N,T);
         mat<3, 3>TBN=mat<3,3>{T,B,N}.transpose();
        
-        vec3 n = TBN*model.normal(barUV).xyz();
+        vec3 n = normalized(TBN*model.normal(barUV).xyz());
 
         double ambient = .4;
         double diffuse = .4 * std::max(0., n * l);
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
         std::cerr << argv[m]<<std::endl;
         PhongShader shader({ 1, 1, 1 }, model);
         std::string fname(argv[m]);
-        if (fname.find("eye_outer") != std::string::npos)
-            shader.ModelTrans = shader.ModelTrans*mat<4,4>{ {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0.1,1}} };//修复bug
+        //if (fname.find("eye_outer") != std::string::npos)
+        //    shader.ModelTrans = shader.ModelTrans*mat<4,4>{ {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0.1,1}} };//修复bug
         for (int i = 0; i < model.nfaces(); i++) {
             Triangle clip = {shader.vertex(i, 0), shader.vertex(i, 1), shader.vertex(i, 2)};
             rasterize(clip, shader, framebuffer);

@@ -44,7 +44,12 @@ void rasterize(const Triangle& clip, const Shader& shader, TGAImage& framebuffer
 #pragma omp parallel for
 	for (int x = xmin; x < xmax; x++) {
 		for (int y = ymin; y < ymax; y++) {
-			vec3 bc = ABC.invert_transpose() * vec3{static_cast<double>(x),static_cast<double>(y),1.};
+			vec3 bcScreen = ABC.invert_transpose() * vec3{static_cast<double>(x),static_cast<double>(y),1.};
+			double interpolate_w = bcScreen.x / (clip[0].w) + bcScreen.y / (clip[1].w) + bcScreen.z / (clip[2].w);
+			double alpha = (bcScreen.x / (clip[0].w)) / interpolate_w;
+			double beta  = (bcScreen.y / (clip[1].w)) / interpolate_w;
+			double gamma = (bcScreen.z / (clip[2].w)) / interpolate_w;
+			vec3 bc{alpha,beta,gamma};
 			if (bc.x < 0 || bc.y < 0 || bc.z < 0)continue;
 			double z = bc * vec3{ ndc[0].z, ndc[1].z, ndc[2].z };
 			if (z < zbuffer[y * framebuffer.width() + x])continue;
